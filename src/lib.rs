@@ -1,5 +1,3 @@
-mod error;
-
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
@@ -43,8 +41,9 @@ impl PinataClient {
             .map_err(|e| JsValue::from_str(&format!("Failed to append file: {:?}", e)))?;
 
         let mut opts = web_sys::RequestInit::new();
-        opts.method("POST");
-        opts.body(Some(&form.into()));
+        opts.set_method("POST");
+        let form_js: JsValue = form.into();
+        opts.set_body(&form_js);
 
         let request = web_sys::Request::new_with_str_and_init(
             &format!("{}/pinning/pinFileToIPFS", PINATA_API_URL),
@@ -76,8 +75,8 @@ impl PinataClient {
     #[wasm_bindgen]
     pub async fn pin_json(&self, data: JsValue) -> Result<JsValue, JsValue> {
         let mut opts = web_sys::RequestInit::new();
-        opts.method("POST");
-        opts.body(Some(&data));
+        opts.set_method("POST");
+        opts.set_body(&data);
 
         let request = web_sys::Request::new_with_str_and_init(
             &format!("{}/pinning/pinJSONToIPFS", PINATA_API_URL),
@@ -111,7 +110,7 @@ impl PinataClient {
     #[wasm_bindgen]
     pub async fn unpin(&self, hash: String) -> Result<(), JsValue> {
         let mut opts = web_sys::RequestInit::new();
-        opts.method("DELETE");
+        opts.set_method("DELETE");
 
         let request = web_sys::Request::new_with_str_and_init(
             &format!("{}/pinning/unpin/{}", PINATA_API_URL, &hash),
