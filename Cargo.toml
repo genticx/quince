@@ -2,27 +2,13 @@
 name = "kuzzo"
 version = "0.1.0"
 edition = "2021"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["kuzzmo <kuzzmo@kuzzmo.com>"]
 description = "A lightweight Pinata.cloud client for Rust that compiles to WebAssembly"
 license = "MIT"
-repository = "https://github.com/yourusername/kuzzo"
+repository = "https://github.com/kuzzmo/kuzzo"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-
-[[example]]
-name = "basic"
-crate-type = ["cdylib"]
-required-features = ["wasm"]
-
-[[example]]
-name = "client"
-crate-type = ["cdylib"]
-required-features = ["wasm"]
-
-[features]
-default = []
-wasm = []
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }

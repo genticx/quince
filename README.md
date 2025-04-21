@@ -1,6 +1,6 @@
-# Kuzzo
+# kuzzo
 
-A lightweight Pinata.cloud client for Rust that compiles to WebAssembly.
+A lightweight pinata.cloud client for Rust that compiles to WebAssembly.
 
 ## Features
 
@@ -12,7 +12,7 @@ A lightweight Pinata.cloud client for Rust that compiles to WebAssembly.
 
 ## Installation
 
-Add Kuzzo to your `Cargo.toml`:
+Add kuzzo to your `Cargo.toml`:
 
 ```toml
 [dependencies]
@@ -25,153 +25,139 @@ kuzzo = "0.1.0"
 
 ```rust
 use kuzzo::PinataClient;
-use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
-pub struct MyApp {
-    client: PinataClient,
-}
-
-#[wasm_bindgen]
-impl MyApp {
-    #[wasm_bindgen(constructor)]
-    pub fn new(api_key: String, secret_key: String) -> Self {
-        Self {
-            client: PinataClient::new(api_key, secret_key),
-        }
-    }
-}
+// Initialize the client
+let client = PinataClient::new("your_api_key", "your_secret_key");
 ```
 
 ### Pin a File
 
 ```rust
-#[wasm_bindgen]
-impl MyApp {
-    pub async fn pin_file(&self, file_path: String) -> Result<JsValue, JsValue> {
-        self.client.pin_file(file_path).await
-    }
-}
+use kuzzo::PinataClient;
 
-// JavaScript usage:
-// const app = new MyApp("your_api_key", "your_secret_key");
-// const result = await app.pin_file("path/to/file.txt");
-// console.log("File pinned with hash:", result.ipfs_hash);
+async fn pin_file_example() -> Result<(), Box<dyn std::error::Error>> {
+    let client = PinataClient::new("your_api_key", "your_secret_key");
+    let result = client.pin_file("path/to/file.txt").await?;
+    println!("File pinned with hash: {}", result.ipfs_hash);
+    Ok(())
+}
 ```
 
 ### Pin JSON Data
 
 ```rust
-#[wasm_bindgen]
-impl MyApp {
-    pub async fn pin_json(&self, data: JsValue) -> Result<JsValue, JsValue> {
-        self.client.pin_json(data).await
-    }
-}
+use kuzzo::PinataClient;
+use serde_json::json;
 
-// JavaScript usage:
-// const data = {
-//     name: "test",
-//     value: 42
-// };
-// const result = await app.pin_json(data);
-// console.log("JSON pinned with hash:", result.ipfs_hash);
+async fn pin_json_example() -> Result<(), Box<dyn std::error::Error>> {
+    let client = PinataClient::new("your_api_key", "your_secret_key");
+    let data = json!({
+        "name": "test",
+        "value": 42
+    });
+    let result = client.pin_json(&data).await?;
+    println!("JSON pinned with hash: {}", result.ipfs_hash);
+    Ok(())
+}
 ```
 
 ### Unpin Content
 
 ```rust
-#[wasm_bindgen]
-impl MyApp {
-    pub async fn unpin(&self, hash: String) -> Result<(), JsValue> {
-        self.client.unpin(hash).await
-    }
-}
+use kuzzo::PinataClient;
 
-// JavaScript usage:
-// await app.unpin("QmHash...");
+async fn unpin_example() -> Result<(), Box<dyn std::error::Error>> {
+    let client = PinataClient::new("your_api_key", "your_secret_key");
+    client.unpin("QmHash...").await?;
+    println!("Content unpinned successfully");
+    Ok(())
+}
 ```
 
-### Complete Example
+### Usage in Web Frameworks
 
-Here's a complete example showing all features:
+#### Leptos Example
 
 ```rust
+use leptos::*;
 use kuzzo::PinataClient;
-use wasm_bindgen::prelude::*;
-use serde_wasm_bindgen::to_value;
 
-#[wasm_bindgen]
-pub struct MyApp {
-    client: PinataClient,
-}
-
-#[wasm_bindgen]
-impl MyApp {
-    #[wasm_bindgen(constructor)]
-    pub fn new(api_key: String, secret_key: String) -> Self {
-        Self {
-            client: PinataClient::new(api_key, secret_key),
+#[component]
+pub fn PinButton() -> impl IntoView {
+    let client = PinataClient::new("your_api_key", "your_secret_key");
+    
+    let pin_file = create_action(move |file_path: &String| {
+        let client = client.clone();
+        async move {
+            let result = client.pin_file(file_path.clone()).await?;
+            Ok::<_, Box<dyn std::error::Error>>(result.ipfs_hash)
         }
-    }
+    });
 
-    pub async fn pin_file(&self, file_path: String) -> Result<JsValue, JsValue> {
-        self.client.pin_file(file_path).await
-    }
-
-    pub async fn pin_json(&self, data: JsValue) -> Result<JsValue, JsValue> {
-        self.client.pin_json(data).await
-    }
-
-    pub async fn unpin(&self, hash: String) -> Result<(), JsValue> {
-        self.client.unpin(hash).await
+    view! {
+        <button on:click=move |_| {
+            pin_file.dispatch("path/to/file.txt".to_string());
+        }>
+            "Pin File"
+        </button>
     }
 }
+```
 
-// JavaScript usage:
-// const app = new MyApp("your_api_key", "your_secret_key");
-//
-// // Pin a file
-// const fileResult = await app.pin_file("path/to/file.txt");
-// console.log("File pinned with hash:", fileResult.ipfs_hash);
-//
-// // Pin JSON data
-// const jsonData = {
-//     name: "test",
-//     value: 42
-// };
-// const jsonResult = await app.pin_json(jsonData);
-// console.log("JSON pinned with hash:", jsonResult.ipfs_hash);
-//
-// // Unpin content
-// await app.unpin(fileResult.ipfs_hash);
+#### Yew Example
+
+```rust
+use yew::prelude::*;
+use kuzzo::PinataClient;
+
+#[function_component(PinButton)]
+pub fn pin_button() -> Html {
+    let client = PinataClient::new("your_api_key", "your_secret_key");
+    
+    let onclick = Callback::from(move |_| {
+        let client = client.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            if let Ok(result) = client.pin_file("path/to/file.txt").await {
+                log::info!("File pinned with hash: {}", result.ipfs_hash);
+            }
+        });
+    });
+
+    html! {
+        <button {onclick}>
+            { "Pin File" }
+        </button>
+    }
+}
 ```
 
 ## Response Format
 
-All pinning operations return a `PinResponse` object with the following structure:
+All pinning operations return a `PinResponse` struct with the following fields:
 
-```typescript
-interface PinResponse {
-    ipfs_hash: string;    // The IPFS hash of the pinned content
-    pin_size: number;     // The size of the pinned content in bytes
-    timestamp: string;    // The timestamp when the content was pinned
+```rust
+pub struct PinResponse {
+    pub ipfs_hash: String,    // The IPFS hash of the pinned content
+    pub pin_size: u64,        // The size of the pinned content in bytes
+    pub timestamp: String,    // The timestamp when the content was pinned
 }
 ```
 
 ## Error Handling
 
-All methods return a `Result` type that can be handled in JavaScript:
+All methods return a `Result` type that can be handled using Rust's error handling:
 
-```javascript
-try {
-    const result = await app.pin_file("path/to/file.txt");
-    console.log("Success:", result);
-} catch (error) {
-    console.error("Error:", error);
+```rust
+use kuzzo::PinataClient;
+
+async fn handle_errors() -> Result<(), Box<dyn std::error::Error>> {
+    let client = PinataClient::new("your_api_key", "your_secret_key");
+    
+    match client.pin_file("path/to/file.txt").await {
+        Ok(result) => println!("Success: {}", result.ipfs_hash),
+        Err(e) => eprintln!("Error: {}", e),
+    }
+    
+    Ok(())
 }
 ```
-
-## License
-
-MIT 
