@@ -3,7 +3,7 @@ name = "kuzzo"
 version = "0.1.0"
 edition = "2021"
 authors = ["kuzzmo <kuzzmo@kuzzmo.com>"]
-description = "A lightweight Pinata.cloud client for Rust that compiles to WebAssembly"
+description = "A lightweight Pinata.cloud client for Rust"
 license = "MIT"
 repository = "https://github.com/kuzzmo/kuzzo"
 
