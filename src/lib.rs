@@ -40,9 +40,9 @@ impl PinataClient {
         form.append_with_blob("file", &file)
             .map_err(|e| JsValue::from_str(&format!("Failed to append file: {:?}", e)))?;
 
-        let mut opts = web_sys::RequestInit::new();
-        opts.set_method("POST");
+        let opts = web_sys::RequestInit::new();
         let form_js: JsValue = form.into();
+        opts.set_method("POST");
         opts.set_body(&form_js);
 
         let request = web_sys::Request::new_with_str_and_init(
@@ -74,7 +74,7 @@ impl PinataClient {
 
     #[wasm_bindgen]
     pub async fn pin_json(&self, data: JsValue) -> Result<JsValue, JsValue> {
-        let mut opts = web_sys::RequestInit::new();
+        let opts = web_sys::RequestInit::new();
         opts.set_method("POST");
         opts.set_body(&data);
 
@@ -109,7 +109,7 @@ impl PinataClient {
 
     #[wasm_bindgen]
     pub async fn unpin(&self, hash: String) -> Result<(), JsValue> {
-        let mut opts = web_sys::RequestInit::new();
+        let opts = web_sys::RequestInit::new();
         opts.set_method("DELETE");
 
         let request = web_sys::Request::new_with_str_and_init(
