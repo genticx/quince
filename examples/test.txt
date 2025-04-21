@@ -1,0 +1,2 @@
+This is a test file for the Kuzzo Pinata client example.
+It will be pinned to IPFS to demonstrate the functionality. 
