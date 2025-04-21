@@ -11,7 +11,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 1: Pin a file
     println!("Pinning file...");
-    let file_result = client.pin_file_blocking("examples/test.txt")?;
+    let file_result = client.pin_file("examples/test.txt")?;
     println!("File pinned with hash: {}", file_result.ipfs_hash);
 
     // Example 2: Pin JSON data
@@ -20,12 +20,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         "name": "test",
         "value": 42
     });
-    let json_result = client.pin_json_blocking(&json_data)?;
+    let json_result = client.pin_json(&json_data)?;
     println!("JSON pinned with hash: {}", json_result.ipfs_hash);
 
     // Example 3: Unpin content
     println!("\nUnpinning content...");
-    client.unpin_blocking(&file_result.ipfs_hash)?;
+    client.unpin(&file_result.ipfs_hash)?;
     println!("Content unpinned successfully");
 
     Ok(())

@@ -14,12 +14,97 @@ pub struct PinResponse {
     pub timestamp: String,
 }
 
+// Native implementation
+#[cfg(not(target_arch = "wasm32"))]
+pub struct PinataClient {
+    api_key: String,
+    secret_key: String,
+    client: reqwest::blocking::Client,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl PinataClient {
+    pub fn new(api_key: String, secret_key: String) -> Self {
+        Self {
+            api_key,
+            secret_key,
+            client: reqwest::blocking::Client::new(),
+        }
+    }
+
+    pub fn pin_file(&self, file_path: &str) -> Result<PinResponse, error::PinataError> {
+        let form = reqwest::blocking::multipart::Form::new()
+            .file("file", file_path)
+            .map_err(|e| error::PinataError::PinFileError(e.to_string()))?;
+
+        let response = self.client
+            .post(&format!("{}/pinning/pinFileToIPFS", PINATA_API_URL))
+            .header("pinata_api_key", &self.api_key)
+            .header("pinata_secret_api_key", &self.secret_key)
+            .multipart(form)
+            .send()
+            .map_err(|e| error::PinataError::NetworkError(e.to_string()))?;
+
+        if !response.status().is_success() {
+            return Err(error::PinataError::PinFileError(format!(
+                "HTTP error: {}",
+                response.status()
+            )));
+        }
+
+        response.json()
+            .map_err(|e| error::PinataError::DeserializationError(e.to_string()))
+    }
+
+    pub fn pin_json<T: Serialize>(&self, data: &T) -> Result<PinResponse, error::PinataError> {
+        let response = self.client
+            .post(&format!("{}/pinning/pinJSONToIPFS", PINATA_API_URL))
+            .header("Content-Type", "application/json")
+            .header("pinata_api_key", &self.api_key)
+            .header("pinata_secret_api_key", &self.secret_key)
+            .json(data)
+            .send()
+            .map_err(|e| error::PinataError::NetworkError(e.to_string()))?;
+
+        if !response.status().is_success() {
+            return Err(error::PinataError::PinJsonError(format!(
+                "HTTP error: {}",
+                response.status()
+            )));
+        }
+
+        response.json()
+            .map_err(|e| error::PinataError::DeserializationError(e.to_string()))
+    }
+
+    pub fn unpin(&self, hash: &str) -> Result<(), error::PinataError> {
+        let response = self.client
+            .delete(&format!("{}/pinning/unpin/{}", PINATA_API_URL, hash))
+            .header("pinata_api_key", &self.api_key)
+            .header("pinata_secret_api_key", &self.secret_key)
+            .send()
+            .map_err(|e| error::PinataError::NetworkError(e.to_string()))?;
+
+        if !response.status().is_success() {
+            return Err(error::PinataError::UnpinError(format!(
+                "HTTP error: {}",
+                response.status()
+            )));
+        }
+
+        Ok(())
+    }
+}
+
+// WASM implementation
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 pub struct PinataClient {
     api_key: String,
     secret_key: String,
 }
 
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 impl PinataClient {
     #[wasm_bindgen(constructor)]
