@@ -1,4 +1,8 @@
-use super::super::{PinataClient, PinResponse, Result, PinataError};
+mod wasm;
+
+pub use wasm::{pin_file, pin_json, unpin};
+
+use super::{PinataClient, PinResponse, Result, PinataError};
 use serde::Serialize;
 use wasm_bindgen::JsValue;
 use web_sys::{Headers, Request, RequestInit, RequestMode, Response};
@@ -144,4 +148,4 @@ pub async fn unpin(client: &PinataClient, hash: &str) -> Result<()> {
     }
 
     Ok(())
-} 
+}

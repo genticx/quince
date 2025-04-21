@@ -1,11 +1,11 @@
 mod error;
-mod platform;
 
 use serde::{Deserialize, Serialize};
-use error::{PinataError, Result};
-
-#[cfg(feature = "wasm-bindgen")]
+use error::PinataError;
 use wasm_bindgen::prelude::*;
+use std::path::Path;
+
+const PINATA_API_URL: &str = "https://api.pinata.cloud";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PinResponse {
@@ -14,65 +14,129 @@ pub struct PinResponse {
     pub timestamp: String,
 }
 
+#[wasm_bindgen]
 pub struct PinataClient {
     api_key: String,
     secret_key: String,
 }
 
+#[wasm_bindgen]
 impl PinataClient {
-    pub fn new(api_key: impl Into<String>, secret_key: impl Into<String>) -> Self {
+    #[wasm_bindgen(constructor)]
+    pub fn new(api_key: String, secret_key: String) -> Self {
         Self {
-            api_key: api_key.into(),
-            secret_key: secret_key.into(),
+            api_key,
+            secret_key,
         }
     }
 
-    pub async fn pin_file(&self, file_path: &str) -> Result<PinResponse> {
-        platform::pin_file(self, file_path).await
-    }
+    #[wasm_bindgen]
+    pub async fn pin_file(&self, file_path: String) -> Result<JsValue, JsValue> {
+        let form = web_sys::FormData::new()
+            .map_err(|e| JsValue::from_str(&format!("Failed to create form: {:?}", e)))?;
 
-    pub async fn pin_json<T: Serialize>(&self, data: &T) -> Result<PinResponse> {
-        platform::pin_json(self, data).await
-    }
+        let blob = web_sys::Blob::new_with_str_sequence(&js_sys::Array::of1(&JsValue::from_str(&file_path)))
+            .map_err(|e| JsValue::from_str(&format!("Failed to create blob: {:?}", e)))?;
 
-    pub async fn unpin(&self, hash: &str) -> Result<()> {
-        platform::unpin(self, hash).await
-    }
-}
+        let file = web_sys::File::new_with_blob_sequence(&js_sys::Array::of1(&blob.into()), "file")
+            .map_err(|e| JsValue::from_str(&format!("Failed to create file: {:?}", e)))?;
 
-#[cfg(feature = "wasm-bindgen")]
-#[wasm_bindgen]
-pub struct WasmPinataClient(PinataClient);
+        form.append_with_blob("file", &file)
+            .map_err(|e| JsValue::from_str(&format!("Failed to append file: {:?}", e)))?;
 
-#[cfg(feature = "wasm-bindgen")]
-#[wasm_bindgen]
-impl WasmPinataClient {
-    #[wasm_bindgen(constructor)]
-    pub fn new(api_key: String, secret_key: String) -> Self {
-        Self(PinataClient::new(api_key, secret_key))
+        let mut opts = web_sys::RequestInit::new();
+        opts.method("POST");
+        opts.body(Some(&form.into()));
+
+        let request = web_sys::Request::new_with_str_and_init(
+            &format!("{}/pinning/pinFileToIPFS", PINATA_API_URL),
+            &opts,
+        ).map_err(|e| JsValue::from_str(&format!("Failed to create request: {:?}", e)))?;
+
+        request.headers().set("pinata_api_key", &self.api_key)
+            .map_err(|e| JsValue::from_str(&format!("Failed to set API key: {:?}", e)))?;
+        request.headers().set("pinata_secret_api_key", &self.secret_key)
+            .map_err(|e| JsValue::from_str(&format!("Failed to set secret key: {:?}", e)))?;
+
+        let window = web_sys::window().unwrap();
+        let resp_value = wasm_bindgen_futures::JsFuture::from(window.fetch_with_request(&request))
+            .await
+            .map_err(|e| JsValue::from_str(&format!("Failed to fetch: {:?}", e)))?;
+
+        let response: web_sys::Response = resp_value.dyn_into()
+            .map_err(|_| JsValue::from_str("Failed to convert response"))?;
+
+        if !response.ok() {
+            return Err(JsValue::from_str(&format!("HTTP error: {}", response.status())));
+        }
+
+        wasm_bindgen_futures::JsFuture::from(response.json()?)
+            .await
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse response: {:?}", e)))
     }
 
     #[wasm_bindgen]
-    pub async fn pin_file(&self, file_path: String) -> Result<PinResponse, JsValue> {
-        self.0.pin_file(&file_path)
-            .await
-            .map_err(|e| JsValue::from_str(&e.to_string()))
-    }
+    pub async fn pin_json(&self, data: JsValue) -> Result<JsValue, JsValue> {
+        let mut opts = web_sys::RequestInit::new();
+        opts.method("POST");
+        opts.body(Some(&data));
 
-    #[wasm_bindgen]
-    pub async fn pin_json(&self, data: JsValue) -> Result<PinResponse, JsValue> {
-        let json_data: serde_json::Value = data.into_serde()
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
-        
-        self.0.pin_json(&json_data)
+        let request = web_sys::Request::new_with_str_and_init(
+            &format!("{}/pinning/pinJSONToIPFS", PINATA_API_URL),
+            &opts,
+        ).map_err(|e| JsValue::from_str(&format!("Failed to create request: {:?}", e)))?;
+
+        request.headers().set("Content-Type", "application/json")
+            .map_err(|e| JsValue::from_str(&format!("Failed to set content type: {:?}", e)))?;
+        request.headers().set("pinata_api_key", &self.api_key)
+            .map_err(|e| JsValue::from_str(&format!("Failed to set API key: {:?}", e)))?;
+        request.headers().set("pinata_secret_api_key", &self.secret_key)
+            .map_err(|e| JsValue::from_str(&format!("Failed to set secret key: {:?}", e)))?;
+
+        let window = web_sys::window().unwrap();
+        let resp_value = wasm_bindgen_futures::JsFuture::from(window.fetch_with_request(&request))
             .await
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+            .map_err(|e| JsValue::from_str(&format!("Failed to fetch: {:?}", e)))?;
+
+        let response: web_sys::Response = resp_value.dyn_into()
+            .map_err(|_| JsValue::from_str("Failed to convert response"))?;
+
+        if !response.ok() {
+            return Err(JsValue::from_str(&format!("HTTP error: {}", response.status())));
+        }
+
+        wasm_bindgen_futures::JsFuture::from(response.json()?)
+            .await
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse response: {:?}", e)))
     }
 
     #[wasm_bindgen]
     pub async fn unpin(&self, hash: String) -> Result<(), JsValue> {
-        self.0.unpin(&hash)
+        let mut opts = web_sys::RequestInit::new();
+        opts.method("DELETE");
+
+        let request = web_sys::Request::new_with_str_and_init(
+            &format!("{}/pinning/unpin/{}", PINATA_API_URL, &hash),
+            &opts,
+        ).map_err(|e| JsValue::from_str(&format!("Failed to create request: {:?}", e)))?;
+
+        request.headers().set("pinata_api_key", &self.api_key)
+            .map_err(|e| JsValue::from_str(&format!("Failed to set API key: {:?}", e)))?;
+        request.headers().set("pinata_secret_api_key", &self.secret_key)
+            .map_err(|e| JsValue::from_str(&format!("Failed to set secret key: {:?}", e)))?;
+
+        let window = web_sys::window().unwrap();
+        let resp_value = wasm_bindgen_futures::JsFuture::from(window.fetch_with_request(&request))
             .await
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+            .map_err(|e| JsValue::from_str(&format!("Failed to fetch: {:?}", e)))?;
+
+        let response: web_sys::Response = resp_value.dyn_into()
+            .map_err(|_| JsValue::from_str("Failed to convert response"))?;
+
+        if !response.ok() {
+            return Err(JsValue::from_str(&format!("HTTP error: {}", response.status())));
+        }
+
+        Ok(())
     }
-} 
+}

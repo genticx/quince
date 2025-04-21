@@ -1,6 +1,21 @@
 [package]
 name = "kuzzo"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "A lightweight Pinata.cloud client for Rust that compiles to WebAssembly"
+license = "MIT"
+repository = "https://github.com/yourusername/kuzzo"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = ["Headers", "Request", "RequestInit", "RequestMode", "Response", "File", "FormData", "Window"] }
+serde-wasm-bindgen = "0.6"
