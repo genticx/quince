@@ -33,3 +33,7 @@ wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3", features = ["Window", "Request", "RequestInit", "RequestMode", "Response", "Headers", "FormData", "File", "Blob"] }
 js-sys = "0.3"
 serde-wasm-bindgen = "0.6"
+
+[dev-dependencies]
+futures = "0.3"
+wasm-bindgen-test = "0.3"

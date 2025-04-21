@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
+#[cfg(test)]
+mod tests;
+
 const PINATA_API_URL: &str = "https://api.pinata.cloud";
 
 #[derive(Debug, Serialize, Deserialize)]
