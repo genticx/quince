@@ -1,4 +1,4 @@
-# kuzzo
+# Quince
 
 A lightweight pinata.cloud client for Rust that compiles to WebAssembly.
 
@@ -12,11 +12,11 @@ A lightweight pinata.cloud client for Rust that compiles to WebAssembly.
 
 ## Installation
 
-Add kuzzo to your `Cargo.toml`:
+Add quince to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-kuzzo = "0.1.0"
+quince = "0.1.0"
 ```
 
 ## Usage
@@ -24,7 +24,7 @@ kuzzo = "0.1.0"
 ### Basic Setup
 
 ```rust
-use kuzzo::PinataClient;
+use quince::PinataClient;
 
 // Initialize the client
 let client = PinataClient::new("your_api_key", "your_secret_key");
@@ -33,7 +33,7 @@ let client = PinataClient::new("your_api_key", "your_secret_key");
 ### Pin a File
 
 ```rust
-use kuzzo::PinataClient;
+use quince::PinataClient;
 
 async fn pin_file_example() -> Result<(), Box<dyn std::error::Error>> {
     let client = PinataClient::new("your_api_key", "your_secret_key");
@@ -46,7 +46,7 @@ async fn pin_file_example() -> Result<(), Box<dyn std::error::Error>> {
 ### Pin JSON Data
 
 ```rust
-use kuzzo::PinataClient;
+use quince::PinataClient;
 use serde_json::json;
 
 async fn pin_json_example() -> Result<(), Box<dyn std::error::Error>> {
@@ -64,7 +64,7 @@ async fn pin_json_example() -> Result<(), Box<dyn std::error::Error>> {
 ### Unpin Content
 
 ```rust
-use kuzzo::PinataClient;
+use quince::PinataClient;
 
 async fn unpin_example() -> Result<(), Box<dyn std::error::Error>> {
     let client = PinataClient::new("your_api_key", "your_secret_key");
@@ -80,7 +80,7 @@ async fn unpin_example() -> Result<(), Box<dyn std::error::Error>> {
 
 ```rust
 use leptos::*;
-use kuzzo::PinataClient;
+use quince::PinataClient;
 
 #[component]
 pub fn PinButton() -> impl IntoView {
@@ -108,7 +108,7 @@ pub fn PinButton() -> impl IntoView {
 
 ```rust
 use yew::prelude::*;
-use kuzzo::PinataClient;
+use quince::PinataClient;
 
 #[function_component(PinButton)]
 pub fn pin_button() -> Html {
@@ -148,7 +148,7 @@ pub struct PinResponse {
 All methods return a `Result` type that can be handled using Rust's error handling:
 
 ```rust
-use kuzzo::PinataClient;
+use quince::PinataClient;
 
 async fn handle_errors() -> Result<(), Box<dyn std::error::Error>> {
     let client = PinataClient::new("your_api_key", "your_secret_key");
