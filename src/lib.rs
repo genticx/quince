@@ -3,11 +3,26 @@ use wasm_bindgen::prelude::*;
 
 const PINATA_API_URL: &str = "https://api.pinata.cloud";
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PinResponse {
+    #[serde(rename = "IpfsHash")]
     pub ipfs_hash: String,
+    #[serde(rename = "PinSize")]
     pub pin_size: u64,
+    #[serde(rename = "Timestamp")]
     pub timestamp: String,
+    #[serde(rename = "ID")]
+    pub id: String,
+    #[serde(rename = "Name")]
+    pub name: Option<String>,
+    #[serde(rename = "NumberOfFiles")]
+    pub number_of_files: u64,
+    #[serde(rename = "MimeType")]
+    pub mime_type: String,
+    #[serde(rename = "GroupId")]
+    pub group_id: Option<String>,
+    #[serde(rename = "Keyvalues")]
+    pub keyvalues: Option<serde_json::Value>,
 }
 
 #[wasm_bindgen]
