@@ -56,8 +56,8 @@ impl PinataClient {
             .map_err(|e| JsValue::from_str(&format!("Failed to append file: {:?}", e)))?;
 
         let opts = web_sys::RequestInit::new();
-        let form_js: JsValue = form.into();
         opts.set_method("POST");
+        let form_js: JsValue = form.into();
         opts.set_body(&form_js);
 
         let request = web_sys::Request::new_with_str_and_init(
@@ -120,6 +120,41 @@ impl PinataClient {
         wasm_bindgen_futures::JsFuture::from(response.json()?)
             .await
             .map_err(|e| JsValue::from_str(&format!("Failed to parse response: {:?}", e)))
+    }
+
+    #[wasm_bindgen]
+    pub async fn pin_file_blob(&self, blob: web_sys::Blob) -> Result<JsValue, JsValue> {
+        let form = web_sys::FormData::new()
+            .map_err(|e| JsValue::from_str(&format!("Failed to create form: {:?}", e)))?;
+
+        form.append_with_blob("file", &blob)
+            .map_err(|e| JsValue::from_str(&format!("Failed to append blob: {:?}", e)))?;
+
+        let opts = web_sys::RequestInit::new();
+        opts.set_method("POST");
+        let form_js: JsValue = form.into();
+        opts.set_body(&form_js);
+
+        let request = web_sys::Request::new_with_str_and_init(
+            &format!("{}/pinning/pinFileToIPFS", PINATA_API_URL),
+            &opts,
+        ).map_err(|e| JsValue::from_str(&format!("Failed to create request: {:?}", e)))?;
+
+        request.headers().set("pinata_api_key", &self.api_key)?;
+        request.headers().set("pinata_secret_api_key", &self.secret_key)?;
+
+        let window = web_sys::window().unwrap();
+        let resp_value = wasm_bindgen_futures::JsFuture::from(window.fetch_with_request(&request))
+            .await?;
+
+        let response: web_sys::Response = resp_value.dyn_into()?;
+
+        if !response.ok() {
+            return Err(JsValue::from_str(&format!("HTTP error: {}", response.status())));
+        }
+
+        wasm_bindgen_futures::JsFuture::from(response.json()?)
+            .await
     }
 
     #[wasm_bindgen]
