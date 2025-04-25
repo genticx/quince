@@ -17,8 +17,9 @@ pub struct PinResponse {
     pub name: Option<String>,
     #[serde(rename = "NumberOfFiles")]
     pub number_of_files: u64,
+    #[serde(default)]
     #[serde(rename = "MimeType")]
-    pub mime_type: String,
+    pub mime_type: Option<String>,
     #[serde(rename = "GroupId")]
     pub group_id: Option<String>,
     #[serde(rename = "Keyvalues")]
