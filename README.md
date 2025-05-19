@@ -104,33 +104,6 @@ pub fn PinButton() -> impl IntoView {
 }
 ```
 
-#### Yew Example
-
-```rust
-use yew::prelude::*;
-use quince::PinataClient;
-
-#[function_component(PinButton)]
-pub fn pin_button() -> Html {
-    let client = PinataClient::new("your_api_key", "your_secret_key");
-    
-    let onclick = Callback::from(move |_| {
-        let client = client.clone();
-        wasm_bindgen_futures::spawn_local(async move {
-            if let Ok(result) = client.pin_file("path/to/file.txt").await {
-                log::info!("File pinned with hash: {}", result.ipfs_hash);
-            }
-        });
-    });
-
-    html! {
-        <button {onclick}>
-            { "Pin File" }
-        </button>
-    }
-}
-```
-
 ## Response Format
 
 All pinning operations return a `PinResponse` struct with the following fields:
