@@ -1,6 +1,6 @@
 # Quince
 
-A lightweight pinata.cloud client for Rust that compiles to WebAssembly.
+A lightweight pinata.cloud wasm client in Rust.
 
 ## Features
 
